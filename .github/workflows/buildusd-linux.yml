@@ -1,0 +1,22 @@
+name: BuildUSDLinux
+
+on:
+  push:
+    branches:
+      - dev
+      - release
+  issue_comment:
+    types: [created]
+
+jobs:
+  GetUser:
+    runs-on: ubuntu-20.04
+    timeout-minutes: 5
+    outputs:
+      require-result: ${{ steps.check.outputs.require-result }}
+    steps:
+      - uses: actions-cool/check-user-permission@v2
+        id: check
+        with:
+          require: 'write'
+          username: ${{ github.event.comment.user.login }}
