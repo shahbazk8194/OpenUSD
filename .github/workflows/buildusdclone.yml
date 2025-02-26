@@ -10,7 +10,6 @@ jobs:
     outputs:
       require-result: ${{ steps.check.outputs.require-result }}
       check-result: ${{ steps.check.outputs.check-result }}
-      user-permission: ${{ steps.check.outputs.user-permission }}
     steps:
       - name: CheckPermissions
         uses: actions-cool/check-user-permission@v2
