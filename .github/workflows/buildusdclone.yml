@@ -21,4 +21,4 @@ jobs:
       - name: PrintPermissions
         run: |
           echo "The user: ${{ github.triggering_actor }}"
-          echo "The permissions: ${{ UserPermission.outputs.user-permission }}"
+          echo "The permissions: ${{ steps.UserPermission.outputs.user-permission }}"
