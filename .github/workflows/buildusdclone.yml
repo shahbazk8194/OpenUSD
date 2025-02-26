@@ -1,7 +1,7 @@
 name: BuildUSDClone
 
 on:
-  workflow_distpatch:
+  workflow_dispatch:
 
 jobs:
   GetUser:
