@@ -1,7 +1,7 @@
 name: BuildUSDClone
 
 on:
-  workflow_distpatch:
+  workflow_dispatch:
 
 jobs:
   GetUser:
@@ -13,13 +13,12 @@ jobs:
       user-permission: ${{ steps.check.outputs.user-permission }}
     steps:
       - name: CheckPermissions
-      - uses: actions-cool/check-user-permission@v2
+        uses: actions-cool/check-user-permission@v2
         id: UserPermission
         with:
           require: 'write'
           username: ${{ github.triggering_actor }}
-    steps:
       - name: PrintPermissions
-      - run: |
+        run: |
           echo "The user: ${{ github.triggering_actor }}"
           echo "The permissions: ${{ steps.check.outputs.user-permission }}"
