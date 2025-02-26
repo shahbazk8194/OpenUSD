@@ -18,7 +18,6 @@ jobs:
         with:
           require: 'write'
           username: ${{ github.triggering_actor }}
-    steps:
       - name: PrintPermissions
       - run: |
           echo "The user: ${{ github.triggering_actor }}"
