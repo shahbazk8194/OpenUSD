@@ -25,6 +25,8 @@ jobs:
   GetGitRef:
     runs-on: ubuntu-20.04
     timeout-minutes: 5
+    needs:
+      - GetUser
     outputs:
       ref: ${{ steps.setter.outputs.ref }}
     steps:
@@ -45,9 +47,7 @@ jobs:
           echo "ref=$REF" >> "$GITHUB_OUTPUT"
       - name: Print GITHUB_ENV var
         run: |
-          echo "GITHUB_ENV is:"
           echo "$GITHUB_ENV"
       - name: Print GITHUB_OUTPUT var
         run: |
-          echo "GITHUB_OUTPUT is:"
           echo "$GITHUB_OUTPUT"
