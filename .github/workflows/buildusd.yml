@@ -5,6 +5,13 @@ on:
     branches:
       - dev
       - release
+  pull_request:
+    types:
+      - opened
+      - reopened
+    branches:
+      - dev
+      - release
   issue_comment:
     types: [created]
 
@@ -23,7 +30,7 @@ jobs:
   Linux:
     needs:
       - GetUser
-    if: ${{ (github.event.issue.pull_request && contains(github.event.comment.body, '/ActionsPipelines run') && needs.GetUser.outputs.require-result == 'true' ) || github.event_name == 'push' }}
+    if: ${{ (github.event.issue.pull_request && needs.GetUser.outputs.require-result == 'true' ) || github.event_name == 'push' }}
     runs-on: ubuntu-22.04
     env:
       PYTHON_VERSION: "3.9"
