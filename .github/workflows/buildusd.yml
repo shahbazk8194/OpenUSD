@@ -85,14 +85,9 @@ jobs:
           path: |
             USDinst
           key: ${{ steps.cache-usd-build-dependency.outputs.cache-primary-key }}
-      - name: PWD
-        run: |
-          echo "*******************"
-          tree
-          echo "*******************"
       - name: Test USD
+        working-directory: ./USDgen/build/OpenUSD
         run: |
-          cd USDgen/build/OpenUSD
           ctest -V -C Release
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -138,7 +133,7 @@ jobs:
       - name: Build USD
         run: |
           export PATH=/Applications/CMake.app/Contents/bin:$PATH
-          python3 build_scripts/build_usd.py --no-materialx --generator Xcode --build USDgen/build --src USDgen/src USDinst -v
+          python3 build_scripts/build_usd.py --no-materialx --generator Xcode --build USDgen/build --src USDgen/src USDinst --build-args USD,"-DPXR_HEADLESS_TEST_MODE=ON -DPXR_BUILD_TESTS=ON" -v
       - name: Save build artifacts to cache
         if: steps.cache-usd-build-dependency.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
@@ -146,11 +141,11 @@ jobs:
           path: |
             USDinst
           key: ${{ steps.cache-usd-build-dependency.outputs.cache-primary-key }}
-      - name: PWD
+      - name: Test USD
+        working-directory: ./USDgen/build/OpenUSD
         run: |
-          echo "*******************"
-          tree
-          echo "*******************"
+          export PATH=/Applications/CMake.app/Contents/bin:$PATH
+          ctest -V -C Release
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -195,7 +190,7 @@ jobs:
           REM build_usd.py. This causes the build to fail, because
           REM the pre-installed boost does not include boost_python27
           call set BOOST_ROOT=
-          python build_scripts/build_usd.py --no-materialx --generator "Visual Studio 16 2019" --build USDgen/build --src USDgen/src USDinst --build-args USD,"-DPXR_ENABLE_PRECOMPILED_HEADERS=OFF" -v
+          python build_scripts/build_usd.py --no-materialx --generator "Visual Studio 16 2019" --build USDgen/build --src USDgen/src USDinst --build-args USD,"-DPXR_ENABLE_PRECOMPILED_HEADERS=OFF -DPXR_HEADLESS_TEST_MODE=ON -DPXR_BUILD_TESTS=ON" -v
         shell: cmd
       - name: Save build artifacts to cache
         if: steps.cache-usd-build-dependency.outputs.cache-hit != 'true'
@@ -204,13 +199,16 @@ jobs:
           path: |
             USDinst
           key: ${{ steps.cache-usd-build-dependency.outputs.cache-primary-key }}
-      - name: PWD
+      - name: Test USD
+        working-directory: ./USDgen/build/OpenUSD
         run: |
-          echo "*******************"
-          tree
-          echo "*******************"
+          call set PATH=D:\a\OpenUSD\OpenUSD\USDinst\bin;D:\a\OpenUSD\OpenUSD\USDinst\lib;%PATH%
+          call set PYTHONPATH=D:\a\OpenUSD\OpenUSD\USDinst\lib\python;%PYTHONPATH%
+          ctest -V -C Release
+        shell: cmd
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: usd-win64
           path: USDinst
+
