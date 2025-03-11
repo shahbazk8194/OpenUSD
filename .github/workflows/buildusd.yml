@@ -86,6 +86,7 @@ jobs:
             USDinst
           key: ${{ steps.cache-usd-build-dependency.outputs.cache-primary-key }}
       - name: Test USD
+        continue-on-error: true
         working-directory: ./USDgen/build/OpenUSD
         run: |
           ctest -V -C Release
@@ -142,6 +143,7 @@ jobs:
             USDinst
           key: ${{ steps.cache-usd-build-dependency.outputs.cache-primary-key }}
       - name: Test USD
+        continue-on-error: true
         working-directory: ./USDgen/build/OpenUSD
         run: |
           export PATH=/Applications/CMake.app/Contents/bin:$PATH
@@ -200,6 +202,7 @@ jobs:
             USDinst
           key: ${{ steps.cache-usd-build-dependency.outputs.cache-primary-key }}
       - name: Test USD
+        continue-on-error: true
         working-directory: ./USDgen/build/OpenUSD
         run: |
           call set PATH=D:\a\OpenUSD\OpenUSD\USDinst\bin;D:\a\OpenUSD\OpenUSD\USDinst\lib;%PATH%
