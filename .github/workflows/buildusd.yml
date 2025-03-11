@@ -9,9 +9,6 @@ on:
     types:
       - opened
       - reopened
-    branches:
-      - dev
-      - release
   issue_comment:
     types: [created]
 
