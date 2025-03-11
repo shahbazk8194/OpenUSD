@@ -85,6 +85,15 @@ jobs:
           path: |
             USDinst
           key: ${{ steps.cache-usd-build-dependency.outputs.cache-primary-key }}
+      - name: PWD
+        run: |
+          echo "*******************"
+          tree
+          echo "*******************"
+      - name: Test USD
+        run: |
+          cd USDgen/build/OpenUSD
+          ctest -V -C Release
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -137,6 +146,11 @@ jobs:
           path: |
             USDinst
           key: ${{ steps.cache-usd-build-dependency.outputs.cache-primary-key }}
+      - name: PWD
+        run: |
+          echo "*******************"
+          tree
+          echo "*******************"
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -190,6 +204,11 @@ jobs:
           path: |
             USDinst
           key: ${{ steps.cache-usd-build-dependency.outputs.cache-primary-key }}
+      - name: PWD
+        run: |
+          echo "*******************"
+          tree
+          echo "*******************"
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
