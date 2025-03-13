@@ -205,7 +205,7 @@ jobs:
         continue-on-error: true
         working-directory: ./USDgen/build/OpenUSD
         run: |
-          call set PATH=D:\a\OpenUSD\OpenUSD\USDinst\bin;D:\a\OpenUSD\OpenUSD\USDinst\lib;D:\a\OpenUSD\OpenUSD\USDinst\plugin;D:\a\OpenUSD\OpenUSD\USDinst\share;%PATH%
+          call set PATH=D:\a\OpenUSD\OpenUSD\USDinst\bin;D:\a\OpenUSD\OpenUSD\USDinst\lib;D:\a\OpenUSD\OpenUSD\USDinst\plugin;D:\a\OpenUSD\OpenUSD\USDinst\share;D:\a\OpenUSD\OpenUSD\USDinst\share\usd\examples\plugin;D:\a\OpenUSD\OpenUSD\USDinst\plugin\usd;%PATH%
           call set PYTHONPATH=D:\a\OpenUSD\OpenUSD\USDinst\lib\python;%PYTHONPATH%
           ctest -V -C Release --exclude-regex "TfPathUtils"
         shell: cmd
