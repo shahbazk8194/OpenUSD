@@ -30,11 +30,6 @@ jobs:
         with:
           files: |
             .github/workflows/**
-      - name: Test Step
-        run: |
-          echo "*****"
-          echo ${{ steps.changed-workflows.outputs.any_changed }}
-          echo "*****"
 
   Linux:
     needs:
