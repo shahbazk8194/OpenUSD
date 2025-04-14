@@ -1,3 +1,4 @@
+# This is a test comment
 set(DIRS
     arch
     tf
