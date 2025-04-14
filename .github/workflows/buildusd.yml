@@ -6,15 +6,12 @@ on:
       - dev
       - release
   pull_request:
-    types:
-      - opened
-      - reopened
-      - review_requested
     branches:
       - dev
       - release
-    paths-ignore:
-      - '.github/workflows/**'
+    paths:
+      - '**'
+      - '!.github/workflows/**'
 
 jobs:
   Validation:
