@@ -1,3 +1,4 @@
+# This is a test
 # It's important to not include the wrong math.h here.
 set(CMAKE_INCLUDE_CURRENT_DIR OFF)
 
