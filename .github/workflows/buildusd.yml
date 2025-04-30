@@ -1,6 +1,7 @@
 name: BuildUSD
 
 # Should not trigger PR
+# Test updating just workflow file. Should not trigger workflow
 on:
   push:
     branches:
