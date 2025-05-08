@@ -1,4 +1,4 @@
-name: BuildUSD # Should not trigger workflow
+name: BuildUSD
 
 on:
   push:
