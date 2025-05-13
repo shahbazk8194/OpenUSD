@@ -87,7 +87,7 @@ jobs:
     needs:
       - Validation
     if: ${{ (github.event_name == 'pull_request' && needs.Validation.outputs.validation-failed != 'true') || github.event_name == 'push' }}
-    runs-on: macos-13
+    runs-on: macos-15
     env:
       PYTHON_VERSION: "3.11"
     timeout-minutes: 120
