@@ -40,6 +40,9 @@ jobs:
           - TAG: cp312
             INTERPRETER: /opt/python/cp312-cp312/bin/python
             VERSION_SPEC: '3.12'
+          - TAG: cp313
+            INTERPRETER: /opt/python/cp313-cp313/bin/python
+            VERSION_SPEC: '3.13'
     runs-on: ubuntu-22.04
     timeout-minutes: 60
     steps:
