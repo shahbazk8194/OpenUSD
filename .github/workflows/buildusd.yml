@@ -31,17 +31,10 @@ jobs:
         with:
           files: |
             .github/workflows/**
-      - name: Check imaging directories
-        id: changed-imaging-dirs
-        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c #v46
-        with:
-          files: |
-            pxr/imaging/**
-            pxr/usdImaging/**
       - name: Determine runner
         id: runner
         run: |
-          if [steps.changed-imaging-dirs.outputs.any_changed == 'true'] || [github.event_name == 'push']; then
+          if [${{ github.event_name }} == 'push' ]; then
             echo "runner=ubuntu-24.04" >> $GITHUB_OUTPUT
           else
             echo "runner=ubunut-22.04" >> $GITHUB_OUTPUT
@@ -51,7 +44,7 @@ jobs:
     needs:
       - Validation
     if: ${{ (github.event_name == 'pull_request' && needs.Validation.outputs.validation-failed != 'true') || github.event_name == 'push' }}
-    runs-on: needs.Validation.outputs.runner
+    runs-on: ${{ needs.Validation.outputs.runner }}
     env:
       PYTHON_VERSION: "3.9"
     timeout-minutes: 120
