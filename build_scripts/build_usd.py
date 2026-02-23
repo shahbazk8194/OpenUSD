@@ -75,21 +75,34 @@ def MacOS():
 if MacOS():
     import apple_utils
 
+# WASM specific defines and helpers
+TARGET_WASM='wasm'
+TARGET_WASM64='wasm64'
+
+# determines flags based on 32 / 64 bit wasm build target
+def GetWasmCompilerFlags(buildTarget):
+    compileFlags = '-pthread --use-port=zlib'
+    linkerFlags = '-pthread'
+
+    if buildTarget == TARGET_WASM64:
+        compileFlags += ' -sMEMORY64=1'
+        linkerFlags += ' -sMEMORY64=1'
+    
+    return (compileFlags, linkerFlags)
+
 def GetBuildTargetDefault():
     if MacOS():
         return apple_utils.GetBuildTargetDefault()
     else:
         return ''
 
-TARGET_WASM='wasm'
-
 def GetBuildTargets():
     if MacOS():
-        return apple_utils.GetBuildTargets() + [TARGET_WASM]
+        return apple_utils.GetBuildTargets() + [TARGET_WASM, TARGET_WASM64]
     elif Linux():
-        return [TARGET_WASM]
+        return [TARGET_WASM, TARGET_WASM64]
     elif Windows():
-        return [TARGET_WASM]        
+        return [TARGET_WASM, TARGET_WASM64]
     else:
         return []
 
@@ -1007,7 +1020,16 @@ def InstallOneTBB(context, force, buildArgs):
     with CurrentWorkingDirectory(DownloadURL(ONETBB_URL, context, force)):
         cmakeOptions = ['-DTBB_TEST=OFF', '-DTBB_STRICT=OFF']
         if context.targetWasm:
-            cmakeOptions += ['-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_CXX_FLAGS="-pthread"']
+            compileFlags, _ = GetWasmCompilerFlags(context.buildTarget)
+
+            # Note: Emscripten toolchain file will check presence of
+            # '-sMEMORY64=1' in 'CMAKE_C_FLAGS' to determine if a
+            # 64 bit build is to be performed
+            cmakeOptions += [
+                '-DBUILD_SHARED_LIBS=OFF',
+                '-DCMAKE_CXX_FLAGS="{}"'.format(compileFlags),
+                '-DCMAKE_C_FLAGS="{}"'.format(compileFlags)
+            ]
 
         cmakeOptions += buildArgs
         RunCMake(context, force, cmakeOptions)
@@ -1060,31 +1082,24 @@ def InstallTBB_MacOS(context, force, buildArgs):
                  ("ifeq ($(arch),$(filter $(arch),armv7 armv7s arm64))",
                   "ifeq ($(arch),$(filter $(arch),armv7 armv7s {0}))"
                         .format(apple_utils.GetTargetArmArch()))])
+        target_config_patches, clang_config_patches = \
+                apple_utils.GetTBBPatches(context)
+        if target_config_patches:
+            # Create config from iOS config
+            shutil.copy(src="build/ios.macos.inc",
+                        dst=f"build/{context.buildTarget.lower()}.macos.inc")
 
-        if context.buildTarget == apple_utils.TARGET_VISIONOS:
-            # Create visionOS config from iOS config
-            shutil.copy(
-                src="build/ios.macos.inc",
-                dst="build/visionos.macos.inc")
+            PatchFile(f"build/{context.buildTarget.lower()}.macos.inc", 
+                      target_config_patches)
 
-            PatchFile("build/visionos.macos.inc",
-                      [("ios","visionos"),
-                       ("iOS", "visionOS"),
-                       ("iPhone", "XR"),
-                       ("IPHONEOS","XROS"),
-                       ("?= 8.0", "?= 1.0")])
-
+        if clang_config_patches:
             # iOS clang just reuses the macOS one,
             # so it's easier to copy it directly.
             shutil.copy(src="build/macos.clang.inc",
-                        dst="build/visionos.clang.inc")
+                        dst=f"build/{context.buildTarget.lower()}.clang.inc")
 
-            PatchFile("build/visionos.clang.inc",
-                      [("ios","visionos"),
-                       ("-miphoneos-version-min=", "-target arm64-apple-xros"),
-                       ("iOS", "visionOS"),
-                       ("iPhone", "XR"),
-                       ("IPHONEOS","XROS")])
+            PatchFile(f"build/{context.buildTarget.lower()}.clang.inc", 
+                        clang_config_patches)
 
         (primaryArch, secondaryArch) = apple_utils.GetTargetArchPair(context)
 
@@ -1196,6 +1211,9 @@ def InstallJPEG(context, force, buildArgs):
         extraJPEGArgs = buildArgs
         if not which("nasm"):
             extraJPEGArgs.append("-DWITH_SIMD=FALSE")
+        
+        # For compatibility with CMake 4+
+        extraJPEGArgs.append("-DCMAKE_POLICY_VERSION_MINIMUM=3.5")
 
         RunCMake(context, force, extraJPEGArgs)
         return os.getcwd()
@@ -1230,6 +1248,10 @@ def InstallTIFF(context, force, buildArgs):
         else:
             extraArgs = []
         extraArgs += buildArgs
+
+        # For compatibility with CMake 4+
+        extraArgs.append("-DCMAKE_POLICY_VERSION_MINIMUM=3.5")
+
         RunCMake(context, force, extraArgs)
 
 TIFF = Dependency("TIFF", InstallTIFF, "include/tiff.h")
@@ -1467,10 +1489,15 @@ def InstallOpenSubdiv(context, force, buildArgs):
             '-DNO_PTEX=ON',
             '-DNO_TBB=ON',
         ]
+        # Note: Emscripten toolchain file will check presence of
+        # '-sMEMORY64=1' in 'CMAKE_C_FLAGS' to determine if a
+        # 64 bit build is to be performed
         if context.targetWasm:
+            compileFlags, _ = GetWasmCompilerFlags(context.buildTarget)
+
             extraArgs.append('-DBUILD_SHARED_LIB=OFF')
-            extraArgs.append('-DCMAKE_CXX_FLAGS="-pthread"')
-            extraArgs.append('-DCMAKE_C_FLAGS="-pthread"')
+            extraArgs.append('-DCMAKE_CXX_FLAGS="{}"'.format(compileFlags))
+            extraArgs.append('-DCMAKE_C_FLAGS="{}"'.format(compileFlags))
             extraArgs.append('-DNO_METAL=ON')
 
         # Use Metal for macOS and all Apple embedded systems.
@@ -1885,6 +1912,12 @@ def InstallUSD(context, force, buildArgs):
 
             extraArgs.append('-DBUILD_SHARED_LIBS=OFF')
 
+            compileFlags, linkFlags = GetWasmCompilerFlags(context.buildTarget)
+
+            extraArgs.append('-DCMAKE_CXX_FLAGS="{}"'.format(compileFlags))
+            extraArgs.append('-DCMAKE_C_FLAGS="{}"'.format(compileFlags))
+            extraArgs.append('-DCMAKE_EXE_LINKER_FLAGS="{}"'.format(linkFlags))
+
         RunCMake(context, force, extraArgs, context.usdInstDir)
 
 USD = Dependency("USD", InstallUSD, "include/pxr/pxr.h")
@@ -2042,6 +2075,9 @@ if MacOS():
                        default=codesignDefault, action="store_true",
                        help=("Enable code signing for macOS builds "
                              "(defaults to enabled on Apple Silicon)"))
+    group.add_argument("--codesign-id", dest="macos_codesign_id", type=str,
+                       help=("A specific code-sign ID to use. If not provided, "
+                             "the build will try and find one or use '-'"))
 
 if Linux():
     group.add_argument("--use-cxx11-abi", type=int, choices=[0, 1],
@@ -2346,14 +2382,16 @@ class InstallContext:
 
         self.ignorePaths = args.ignore_paths or []
         # Build target and code signing
-        self.targetWasm = (args.build_target == TARGET_WASM)
+        self.targetWasm = (args.build_target == TARGET_WASM or 
+                           args.build_target == TARGET_WASM64)
         self.buildTarget = args.build_target
         if MacOS():
             apple_utils.SetTarget(self, self.buildTarget)
 
-            self.macOSCodesign = \
-                (args.macos_codesign if hasattr(args, "macos_codesign")
-                 else False)
+            self.macOSCodesign = False
+            if args.macos_codesign:
+                self.macOSCodesign = (args.macos_codesign_id or 
+                                      apple_utils.GetCodeSignID())
             if apple_utils.IsHostArm() and args.ignore_homebrew:
                 self.ignorePaths.append("/opt/homebrew")
         else:
@@ -2376,8 +2414,7 @@ class InstallContext:
                             not embedded and 
                             not self.targetWasm)
         self.buildExamples = (args.build_examples and 
-                              not embedded and 
-                              not self.targetWasm)
+                              not embedded)
         self.buildTutorials = (args.build_tutorials and 
                                not embedded and 
                                not self.targetWasm)
@@ -2558,9 +2595,6 @@ if context.targetWasm:
         sys.exit(1)
     if "--python" in sys.argv:
         PrintError("Cannot build python components for wasm build targets")
-        sys.exit(1)
-    if "--examples" in sys.argv:
-        PrintError("Cannot build examples for wasm build targets")
         sys.exit(1)
     if "--tutorials" in sys.argv:
         PrintError("Cannot build tutorials for wasm build targets")
@@ -2936,7 +2970,9 @@ if Windows():
 
 if MacOS():
     if context.macOSCodesign:
-        apple_utils.Codesign(context.usdInstDir, verbosity > 1)
+        apple_utils.Codesign(context.usdInstDir,
+                             identifier=context.macOSCodesign,
+                             verbose_output=verbosity > 1)
 
 additionalInstructions = any([context.buildPython, context.buildTools, context.buildPrman])
 if additionalInstructions:

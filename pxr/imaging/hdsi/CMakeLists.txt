@@ -10,6 +10,7 @@ pxr_library(hdsi
         work
         sdf
         cameraUtil
+        usdShade
         geomUtil
         hf
         hd
@@ -30,6 +31,7 @@ pxr_library(hdsi
         materialBindingResolvingSceneIndex
         materialOverrideResolvingSceneIndex
         materialPrimvarTransferSceneIndex
+        materialRenderContextFilteringSceneIndex
         nodeIdentifierResolvingSceneIndex
         nurbsApproximatingSceneIndex
         prefixPathPruningSceneIndex

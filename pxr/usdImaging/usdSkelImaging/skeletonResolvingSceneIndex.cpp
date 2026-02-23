@@ -237,7 +237,8 @@ UsdSkelImagingSkeletonResolvingSceneIndex::_PrimsDirtied(
         TRACE_SCOPE("Looping over dirtied entries");
 
         const bool hasAnimDependencies = !_skelAnimPathToSkeletonPaths.empty();
-        const bool hasInstancerDependencies = !_instancerPathToSkeletonPaths.empty();
+        const bool hasInstancerDependencies = 
+            !_instancerPathToSkeletonPaths.empty();
         
         for (const HdSceneIndexObserver::DirtiedPrimEntry &entry : entries) {
             if (entry.dirtyLocators.Intersects(
@@ -252,9 +253,11 @@ UsdSkelImagingSkeletonResolvingSceneIndex::_PrimsDirtied(
 
             if (hasAnimDependencies && entry.dirtyLocators.Intersects(
                     UsdSkelImagingAnimationSchema::GetDefaultLocator())) {
-                for (const SdfPath &skelPath :
-                         _Lookup(
-                             _skelAnimPathToSkeletonPaths, entry.primPath)) {
+                // Make a copy since _ProcessDirtyLocators can modify
+                // _skelAnimPathToSkeletonPaths.
+                const SdfPathSet skelPaths =
+                    _Lookup(_skelAnimPathToSkeletonPaths, entry.primPath);
+                for (const SdfPath &skelPath : skelPaths) {
                     _ProcessDirtyLocators(
                         skelPath,
                         UsdSkelImagingPrimTypeTokens->skelAnimation,
@@ -263,16 +266,22 @@ UsdSkelImagingSkeletonResolvingSceneIndex::_PrimsDirtied(
                 }
             }
 
-            static const HdDataSourceLocatorSet instancerLocators{
+            static const HdDataSourceLocatorSet instancerLocators {
                 UsdSkelImagingDataSourceXformResolver::GetInstancedByLocator(),
                 UsdSkelImagingDataSourceXformResolver::GetXformLocator(),
-                UsdSkelImagingDataSourceXformResolver::GetInstanceXformLocator()};
+                UsdSkelImagingDataSourceXformResolver::
+                    GetInstanceXformLocator(),
+                UsdSkelImagingDataSourceXformResolver::
+                    GetInstanceAnimationSourceLocator()
+            };
             
             if (hasInstancerDependencies &&
                     entry.dirtyLocators.Intersects(instancerLocators)) {
-                for (const SdfPath &skelPath :
-                         _Lookup(
-                             _instancerPathToSkeletonPaths, entry.primPath)) {
+                // Make a copy since _ProcessDirtyLocators can modify
+                // _instancerPathToSkeletonPaths.
+                const SdfPathSet skelPaths =
+                    _Lookup(_instancerPathToSkeletonPaths, entry.primPath);
+                for (const SdfPath &skelPath : skelPaths) {
                     _ProcessDirtyLocators(
                         skelPath,
                         HdPrimTypeTokens->instancer,
@@ -423,11 +432,13 @@ UsdSkelImagingSkeletonResolvingSceneIndex::_AddDependenciesForResolvedSkeleton(
 {
     TRACE_FUNCTION();
 
-    const SdfPath animationSource = resolvedSkeleton->GetAnimationSource();
-    if (!animationSource.IsEmpty()) {
-        // Note that we add the dependency even if there is no prim at
-        // animationSource or the prim is not a skelAnimation.
-        _skelAnimPathToSkeletonPaths[animationSource].insert(skeletonPath);
+    for (const SdfPath &animSource : 
+        resolvedSkeleton->GetResolvedAnimationSources()) {
+        if (!animSource.IsEmpty()) {
+            // Note that we add the dependency even if there is no prim at
+            // animationSource or the prim is not a skelAnimation.
+            _skelAnimPathToSkeletonPaths[animSource].insert(skeletonPath);
+        }
     }
 
     for (const SdfPath &instancerPath : resolvedSkeleton->GetInstancerPaths()) {
@@ -477,9 +488,11 @@ _RemoveDependenciesForResolvedSkeleton(
         return;
     }
 
-    const SdfPath animationSource = resolvedSkeleton->GetAnimationSource();
-    if (!animationSource.IsEmpty()) {
-        _Remove(animationSource, skeletonPath, &_skelAnimPathToSkeletonPaths);
+    for (const SdfPath &animSource : 
+        resolvedSkeleton->GetResolvedAnimationSources()) {
+        if (!animSource.IsEmpty()) {
+            _Remove(animSource, skeletonPath, &_skelAnimPathToSkeletonPaths);
+        }
     }
 
     for (const SdfPath &instancerPath : resolvedSkeleton->GetInstancerPaths()) {

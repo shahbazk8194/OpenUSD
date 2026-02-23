@@ -33,6 +33,7 @@
 #include "pxr/imaging/hd/extComputation.h"
 #include "pxr/imaging/hd/imageShader.h"
 #include "pxr/imaging/hd/perfLog.h"
+#include "pxr/imaging/hd/renderDelegateInfo.h"
 #include "pxr/imaging/hd/tokens.h"
 
 #include "pxr/imaging/hgi/hgi.h"
@@ -53,6 +54,10 @@ TF_DEFINE_ENV_SETTING(HD_ENABLE_GPU_TINY_PRIM_CULLING, false,
 
 TF_DEFINE_ENV_SETTING(HDST_MAX_LIGHTS, 16,
                       "Maximum number of lights to render with");
+
+TF_DEFINE_ENV_SETTING(HDST_DOME_LIGHT_CUBEMAP_TARGET_MEMORY_MB, 0,
+                      "Maximum memory target in MB for the cubemap computed "
+                      "from the latlong texture for the dome light.");
 
 const TfTokenVector HdStRenderDelegate::SUPPORTED_RPRIM_TYPES =
 {
@@ -207,6 +212,12 @@ HdStRenderDelegate::HdStRenderDelegate(HdRenderSettingsMap const& settingsMap)
             HdRenderSettingsTokens->domeLightCameraVisibility,
             VtValue(true) },
         HdRenderSettingDescriptor{
+            "Maximum memory target, in MB, of calculated cubemap texture for "
+            "dome light",
+            HdStRenderSettingsTokens->domeLightCubemapTargetMemory,
+            VtValue(static_cast<unsigned int>(
+                TfGetEnvSetting(HDST_DOME_LIGHT_CUBEMAP_TARGET_MEMORY_MB))) },
+        HdRenderSettingDescriptor{
             "Enable exposure compensation",
             HdRenderSettingsTokens->enableExposureCompensation,
             VtValue(true) }
@@ -239,6 +250,12 @@ HdStRenderDelegate::GetRenderStats() const
     }
 
     return ra;
+}
+
+bool
+HdStRenderDelegate::RequiresStormTasks() const
+{
+    return true;
 }
 
 HdStRenderDelegate::~HdStRenderDelegate() = default;
@@ -562,27 +579,19 @@ HdStRenderDelegate::IsSupported(
 TfTokenVector
 HdStRenderDelegate::GetShaderSourceTypes() const
 {
-#ifdef PXR_MATERIALX_SUPPORT_ENABLED
-    return {HioGlslfxTokens->glslfx, _tokens->mtlx};
-#else
-    return {HioGlslfxTokens->glslfx};
-#endif
+    return GetRenderDelegateInfo().shaderSourceTypes;
 }
 
 TfTokenVector
 HdStRenderDelegate::GetMaterialRenderContexts() const
 {
-#ifdef PXR_MATERIALX_SUPPORT_ENABLED
-    return {HioGlslfxTokens->glslfx, _tokens->mtlx};
-#else
-    return {HioGlslfxTokens->glslfx};
-#endif
+    return GetRenderDelegateInfo().materialRenderContexts;
 }
 
 bool
 HdStRenderDelegate::IsPrimvarFilteringNeeded() const
 {
-    return true;
+    return GetRenderDelegateInfo().isPrimvarFilteringNeeded;
 }
 
 HdStDrawItemsCachePtr
@@ -608,6 +617,34 @@ HdStRenderDelegate::_ApplyTextureSettings()
 
     _resourceRegistry->SetMemoryRequestForTextureType(
         HdStTextureType::Field, 1048576 * memInMb);
+}
+
+static
+HdRenderDelegateInfo
+_RenderDelegateInfo()
+{
+    HdRenderDelegateInfo info;
+
+    info.materialBindingPurpose = HdTokens->preview;
+    info.materialRenderContexts = {
+        HioGlslfxTokens->glslfx
+#ifdef PXR_MATERIALX_SUPPORT_ENABLED
+        , _tokens->mtlx
+#endif
+    };
+
+    info.isPrimvarFilteringNeeded = true;
+    info.shaderSourceTypes = info.materialRenderContexts;
+    info.isCoordSysSupported = false;
+
+    return info;
+}
+
+const HdRenderDelegateInfo &
+HdStRenderDelegate::GetRenderDelegateInfo()
+{
+    static const HdRenderDelegateInfo info = _RenderDelegateInfo();
+    return info;
 }
 
 PXR_NAMESPACE_CLOSE_SCOPE
