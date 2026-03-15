@@ -221,8 +221,9 @@ jobs:
           check-latest: false
       - name: Install dependencies  
         run: |
-          python -m pip install setuptools
-          python -m pip install wheel
+          ${{ matrix.PYTHON.INTERPRETER }} -m pip install --upgrade pip
+          ${{ matrix.PYTHON.INTERPRETER }} -m pip install setuptools
+          ${{ matrix.PYTHON.INTERPRETER }} -m pip install wheel
         shell: cmd
       - name: Build USD
         run: |
