@@ -371,10 +371,12 @@ jobs:
       - name: Packaging USD
         run: |
           which python3
-          ABS_PATH=$(${{ matrix.BUILD_CONFIG.PYTHON_INTERPRETER }} -c "import os; print(os.path.abspath(r'${{ github.workspace }}').replace('\\', '/'))")
+          # Due to changes in python 3.14 converting local file paths to URLs causes issues on Windows
+          # Use absolute posix style paths to the github workspace instead
+          POSIX_PATH=$(python -c "from pathlib import PureWindowsPath; print(PureWindowsPath(r'${{ github.workspace }}').as_posix())")
           ${{ matrix.BUILD_CONFIG.PYTHON_INTERPRETER }} --version
           ${{ matrix.BUILD_CONFIG.PYTHON_INTERPRETER }} -m pip install pytest
-          ${{ matrix.BUILD_CONFIG.PYTHON_INTERPRETER }} -m pip install --no-index --find-links="$ABS_PATH" usd-core
+          ${{ matrix.BUILD_CONFIG.PYTHON_INTERPRETER }} -m pip install --no-index --find-links=$POSIX_PATH usd-core
           py.test --junitxml TEST-usdinstall-${{ matrix.BUILD_CONFIG.NAME }}.xml build_scripts/pypi/test.py
       - name: Upload pytest test results
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 #v4.6.2
