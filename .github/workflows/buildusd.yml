@@ -270,7 +270,7 @@ jobs:
         run: |
           :: Not using '--tests' to avoid building extra dependencies that are unneeded for headless tests
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          python build_scripts/build_usd.py --no-materialx --alembic --extra-cxxflags="/DIMATH_DLL" --generator "Ninja" --compiler-cache --build USDgen/build --src USDgen/src USDinst --build-args USD,"-DPXR_ENABLE_PRECOMPILED_HEADERS=OFF -DPXR_HEADLESS_TEST_MODE=ON -DPXR_BUILD_TESTS=ON" -v
+          python build_scripts/build_usd.py --no-materialx --alembic --generator "Ninja" --compiler-cache --build USDgen/build --src USDgen/src USDinst --build-args USD,"-DPXR_ENABLE_PRECOMPILED_HEADERS=OFF -DPXR_HEADLESS_TEST_MODE=ON -DPXR_BUILD_TESTS=ON -DCMAKE_CXX_FLAGS=/DIMATH_DLL" -v
         shell: cmd
       - name: Upload artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 #v4.6.2
