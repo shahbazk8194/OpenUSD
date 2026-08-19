@@ -75,7 +75,7 @@ jobs:
           # Note in the latter case, we do not use the --tests argument to avoid building extra dependencies
           # that aren't needed for headless tests.
           if [ "$GITHUB_EVENT_NAME" == "push" ]; then
-            python3 build_scripts/build_usd.py --tests --no-materialx --build USDgen/build --src USDgen/src USDinst --build-args USD,"-DPXR_HEADLESS_TEST_MODE=OFF" -v
+            python3 build_scripts/build_usd.py --tests --no-materialx --alembic --build USDgen/build --src USDgen/src USDinst --build-args USD,"-DPXR_HEADLESS_TEST_MODE=OFF" -v
           else
             python3 build_scripts/build_usd.py --no-materialx --alembic --build USDgen/build --src USDgen/src USDinst --build-args USD,"-DPXR_HEADLESS_TEST_MODE=ON -DPXR_BUILD_TESTS=ON" -v
           fi
@@ -209,7 +209,7 @@ jobs:
         run: |
           # Not using '--tests' to avoid building extra dependencies that are unneeded for headless tests
           export PATH=/Applications/CMake.app/Contents/bin:$PATH
-          python3 build_scripts/build_usd.py --no-materialx --alembic --generator Xcode --build USDgen/build --src USDgen/src USDinst --build-args "USD,-DPXR_HEADLESS_TEST_MODE=ON -DPXR_BUILD_TESTS=ON,openexr,-DIMATH_HALF_USE_LOOKUP_TABLE=OFF" -v
+          python3 build_scripts/build_usd.py --no-materialx --alembic --generator Xcode --build USDgen/build --src USDgen/src USDinst --build-args "USD,-DPXR_HEADLESS_TEST_MODE=ON -DPXR_BUILD_TESTS=ON" -v
       - name: Save build artifacts to cache
         if: steps.cache-usd-build-dependency.outputs.cache-hit != 'true'
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 #v4.3.0
@@ -270,7 +270,7 @@ jobs:
         run: |
           :: Not using '--tests' to avoid building extra dependencies that are unneeded for headless tests
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-          python build_scripts/build_usd.py --no-materialx --alembic --generator "Ninja" --compiler-cache --build USDgen/build --src USDgen/src USDinst --build-args "USD,-DPXR_ENABLE_PRECOMPILED_HEADERS=OFF -DPXR_HEADLESS_TEST_MODE=ON -DPXR_BUILD_TESTS=ON,openexr,-DIMATH_HALF_USE_LOOKUP_TABLE=OFF" -v
+          python build_scripts/build_usd.py --no-materialx --alembic --generator "Ninja" --compiler-cache --build USDgen/build --src USDgen/src USDinst --build-args "USD,-DPXR_ENABLE_PRECOMPILED_HEADERS=OFF -DPXR_HEADLESS_TEST_MODE=ON" -v
         shell: cmd
       - name: Upload artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 #v4.6.2
